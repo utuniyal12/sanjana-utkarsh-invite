@@ -76,14 +76,6 @@
   @keyframes musicBounce{0%,100%{transform:scaleY(.35);}50%{transform:scaleY(1);}}
   @media(max-width:640px){#musicToggle{bottom:16px;right:16px;width:46px;height:46px;}#musicToggle svg{width:18px;height:18px;}}
 
-  #ytAudioWrap{
-    position:fixed;bottom:22px;right:86px;z-index:499;
-    width:64px;height:64px;border-radius:10px;overflow:hidden;
-    border:1px solid var(--gold);box-shadow:0 8px 22px #00000050;
-    background:#0e1436;
-  }
-  @media(max-width:640px){#ytAudioWrap{bottom:16px;right:70px;width:52px;height:52px;}}
-
   /* ornate jali (lattice) texture */
   .textured{
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='none' stroke='%23c9973e' stroke-width='1' opacity='0.09'%3E%3Ccircle cx='80' cy='80' r='5'/%3E%3Ccircle cx='0' cy='0' r='5'/%3E%3Ccircle cx='160' cy='0' r='5'/%3E%3Ccircle cx='0' cy='160' r='5'/%3E%3Ccircle cx='160' cy='160' r='5'/%3E%3Cpath d='M80 46 Q108 80 80 114 Q52 80 80 46Z'/%3E%3Cpath d='M46 80 Q80 108 114 80 Q80 52 46 80Z'/%3E%3Cpath d='M80 20 L80 46 M80 114 L80 140 M20 80 L46 80 M114 80 L140 80'/%3E%3Cpath d='M0 80 Q40 60 80 80 Q120 100 160 80' opacity='.6'/%3E%3Cpath d='M80 0 Q60 40 80 80 Q100 120 80 160' opacity='.6'/%3E%3C/g%3E%3C/svg%3E");
@@ -440,7 +432,9 @@
     <rect class="bar" x="17" y="10" width="3" height="6" rx="1"/>
   </g></svg>
 </div>
-<div id="ytAudioWrap"><div id="ytAudioPlayer"></div></div>
+<audio id="bgMusic" loop preload="auto">
+  <source src="assets/background-music.mp3" type="audio/mpeg">
+</audio>
 
 <!-- ============ ENTRANCE OVERLAY ============ -->
 <div id="entrance">
@@ -809,58 +803,25 @@
 <script>
 const entrance = document.getElementById('entrance');
 const musicToggle = document.getElementById('musicToggle');
+const bgMusic = document.getElementById('bgMusic');
+bgMusic.volume = 0.55;
+let isPlaying = false;
+
 document.getElementById('enterBtn').addEventListener('click', () => {
   entrance.classList.add('hide');
   startMusic();
 });
 
-// ---------------------------------------------------------------------------
-// BACKGROUND MUSIC — paste your YouTube video ID or full URL below.
-// e.g. from https://youtu.be/dQw4w9WgXcQ the ID is: dQw4w9WgXcQ
-// Streams live from YouTube via the official IFrame Player API — nothing is
-// downloaded or rehosted.
-// ---------------------------------------------------------------------------
-const YOUTUBE_VIDEO_ID = "EyeJOyKf48I?si=q8AwzIDHvkvZKLl8";
-// ---------------------------------------------------------------------------
-
-let ytPlayer = null, ytReady = false, isPlaying = false, pendingPlay = false;
-
-const ytTag = document.createElement('script');
-ytTag.src = "https://www.youtube.com/iframe_api";
-document.head.appendChild(ytTag);
-
-window.onYouTubeIframeAPIReady = function(){
-  ytPlayer = new YT.Player('ytAudioPlayer', {
-    height: '64', width: '64',
-    videoId: YOUTUBE_VIDEO_ID,
-    playerVars: {
-      autoplay: 0, controls: 0, disablekb: 1, fs: 0,
-      modestbranding: 1, playsinline: 1,
-      loop: 1, playlist: YOUTUBE_VIDEO_ID // loop needs the same video listed as its own playlist
-    },
-    events: {
-      onReady: function(){
-        ytReady = true;
-        if(pendingPlay) startMusic();
-      },
-      onError: function(e){
-        console.warn('YouTube player error', e.data);
-      }
-    }
-  });
-};
-
 function startMusic(){
-  if(!ytReady){ pendingPlay = true; return; }
-  isPlaying = true;
-  musicToggle.classList.remove('paused');
-  try{
-    ytPlayer.playVideo();
-    setTimeout(()=>{ try{ ytPlayer.unMute(); ytPlayer.setVolume(70); }catch(e){} }, 300);
-  }catch(e){ console.warn('Could not start music', e); }
+  bgMusic.play().then(() => {
+    isPlaying = true;
+    musicToggle.classList.remove('paused');
+  }).catch((e) => {
+    console.warn('Could not start music', e);
+  });
 }
 function stopMusic(){
-  if(ytReady) ytPlayer.pauseVideo();
+  bgMusic.pause();
   isPlaying = false;
   musicToggle.classList.add('paused');
 }
